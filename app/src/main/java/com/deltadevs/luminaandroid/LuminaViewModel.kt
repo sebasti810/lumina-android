@@ -136,8 +136,8 @@ class LuminaViewModel(private val application: Application): AndroidViewModel(ap
     fun restartNode() {
         viewModelScope.launch {
             try {
-                stopNode() // Bereits asynchron
-                delay(100) // Warte sicherheitshalber
+                stopNode()
+                delay(100) 
                 changeNetwork(networkType.value ?: Network.Mocha)
             } catch (e: Exception) {
                 _error.postValue("Restart failed: ${e.message}")
