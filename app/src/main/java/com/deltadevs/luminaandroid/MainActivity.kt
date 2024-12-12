@@ -20,9 +20,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModel
-import com.deltadevs.luminaandroid.LuminaViewModel
+import kotlinx.coroutines.delay
 import uniffi.native.Network
 import uniffi.native.NodeEvent
+
+fun Network.displayName(): String = when (this) {
+    Network.Mainnet -> "Mainnet"
+    Network.Arabica -> "Arabica"
+    Network.Mocha -> "Mocha"
+    is Network.Custom -> "Custom: ${this.id}"
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,7 +91,7 @@ fun LuminaApp(viewModel: LuminaViewModel) {
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Network: ${network.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                                text = "Network: ${networkType?.displayName() ?: "Unknown"}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
@@ -148,8 +155,7 @@ fun LuminaApp(viewModel: LuminaViewModel) {
                     }
 
                     Button(onClick = {
-                        viewModel.stopNode()
-                        viewModel.changeNetwork(viewModel.networkType.value ?: Network.MOCHA)
+                        viewModel.restartNode()
                     }) {
                         Text("Restart")
                     }
@@ -308,14 +314,17 @@ fun NetworkSelectionDialog(
         title = { Text("Select Network") },
         text = {
             Column {
-                Network.values().forEach { network ->
+                listOf(
+                    Network.Mainnet,
+                    Network.Arabica,
+                    Network.Mocha,
+                    Network.Custom("private")
+                ).forEach { network ->
                     TextButton(
-                        onClick = {
-                            onNetworkSelected(network)
-                        },
+                        onClick = { onNetworkSelected(network) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(network.name.lowercase().replaceFirstChar { it.uppercase() })
+                        Text(network.displayName())
                     }
                 }
             }

@@ -8,6 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uniffi.native.*
@@ -66,7 +67,7 @@ class LuminaViewModel(private val application: Application): AndroidViewModel(ap
 
     private fun initializeNode() {
         try {
-            val network = _networkType.value ?: Network.MOCHA
+            val network = _networkType.value ?: Network.Mocha
             Log.d("LuminaViewModel", "Initializing node with network: $network")
             node = LuminaNode(network)
             Log.d("LuminaViewModel", "Node initialized successfully")
@@ -128,6 +129,18 @@ class LuminaViewModel(private val application: Application): AndroidViewModel(ap
             } catch (e: Exception) {
                 Log.e("LuminaViewModel", "Failed to stop node", e)
                 _error.postValue(e.message)
+            }
+        }
+    }
+
+    fun restartNode() {
+        viewModelScope.launch {
+            try {
+                stopNode() // Bereits asynchron
+                delay(100) // Warte sicherheitshalber
+                changeNetwork(networkType.value ?: Network.Mocha)
+            } catch (e: Exception) {
+                _error.postValue("Restart failed: ${e.message}")
             }
         }
     }
@@ -222,13 +235,11 @@ class LuminaViewModel(private val application: Application): AndroidViewModel(ap
                 }
 
                 _networkType.postValue(network)
+                delay(100)
 
-                try {
+                withContext(Dispatchers.IO) {
                     node = LuminaNode(network)
                     startNode()
-                } catch (e: Exception) {
-                    _error.postValue("Failed to initialize new node: ${e.message}")
-                    Log.e("LuminaViewModel", "Node initialization failed", e)
                 }
             } catch (e: Exception) {
                 _error.postValue("Network change failed: ${e.message}")
