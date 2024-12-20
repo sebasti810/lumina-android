@@ -20,15 +20,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.delay
-import uniffi.native.Network
-import uniffi.native.NodeEvent
+import uniffi.lumina_node.*;
+import uniffi.lumina_node_uniffi.*;
 
 fun Network.displayName(): String = when (this) {
     Network.Mainnet -> "Mainnet"
     Network.Arabica -> "Arabica"
     Network.Mocha -> "Mocha"
-    is Network.Custom -> "Custom: ${this.id}"
+    is Network.Custom -> "Custom: ${this.v1}"
 }
 
 class MainActivity : ComponentActivity() {
@@ -318,7 +317,7 @@ fun NetworkSelectionDialog(
                     Network.Mainnet,
                     Network.Arabica,
                     Network.Mocha,
-                    Network.Custom("private")
+                    Network.Custom(NetworkId("private"))
                 ).forEach { network ->
                     TextButton(
                         onClick = { onNetworkSelected(network) },

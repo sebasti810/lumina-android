@@ -11,7 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import uniffi.native.*
+import uniffi.lumina_node.*;
+import uniffi.lumina_node_uniffi.*;
 import java.util.Timer
 import kotlin.concurrent.scheduleAtFixedRate
 
@@ -54,9 +55,7 @@ class LuminaViewModel(private val application: Application): AndroidViewModel(ap
 
     init {
         try {
-            System.loadLibrary("native")
-            val filesDir = application.filesDir.absolutePath
-            Os.setenv("LUMINA_DATA_DIR", filesDir, true)
+            System.loadLibrary("lumina_node_uniffi")
 
             initializeNode()
         } catch (e: Exception) {
@@ -68,10 +67,17 @@ class LuminaViewModel(private val application: Application): AndroidViewModel(ap
     private fun initializeNode() {
         try {
             val network = _networkType.value ?: Network.Mocha
-            Log.d("LuminaViewModel", "Initializing node with network: $network")
-            node = LuminaNode(network)
-            Log.d("LuminaViewModel", "Node initialized successfully")
+            val config = NodeConfig(
+                basePath = application.filesDir.absolutePath,
+                network = network,
+                bootnodes = null,
+                syncingWindowSecs = null,
+                pruningDelaySecs = null,
+                batchSize = null,
+                ed25519SecretKeyBytes = null
+            )
 
+            node = LuminaNode(config)
             viewModelScope.launch {
                 try {
                     val isRunning = node?.isRunning() ?: false
@@ -137,7 +143,7 @@ class LuminaViewModel(private val application: Application): AndroidViewModel(ap
         viewModelScope.launch {
             try {
                 stopNode()
-                delay(100) 
+                delay(100)
                 changeNetwork(networkType.value ?: Network.Mocha)
             } catch (e: Exception) {
                 _error.postValue("Restart failed: ${e.message}")
@@ -238,7 +244,16 @@ class LuminaViewModel(private val application: Application): AndroidViewModel(ap
                 delay(100)
 
                 withContext(Dispatchers.IO) {
-                    node = LuminaNode(network)
+                    val config = NodeConfig(
+                        basePath = application.filesDir.absolutePath,
+                        network = network,
+                        bootnodes = null,
+                        syncingWindowSecs = null,
+                        pruningDelaySecs = null,
+                        batchSize = null,
+                        ed25519SecretKeyBytes = null
+                    )
+                    node = LuminaNode(config)
                     startNode()
                 }
             } catch (e: Exception) {
